@@ -2,6 +2,9 @@
 
 Production-grade Nix packaging and declarative agent skill distribution for the **Composio Universal CLI** (`@composio/cli`).
 
+> [!WARNING]
+> **Community Disclaimer**: This packaging, flake derivation, and skill integration were vibecoded using AI pair-programming agents with human validation. While tested on NixOS and verified against 26.11 standards, please inspect the derivations and report issues if you encounter unexpected edge cases.
+
 ---
 
 ## Features
