@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, unstable]
   pull_request:
-    branches: [main]
+    branches: [main, unstable]
   workflow_dispatch:
 
 jobs:
@@ -32,7 +32,17 @@ jobs:
       - name: Build Package
         run: nix build .#composio-cli
 
-      - name: Test Execution
+      - name: Test Composio CLI Execution
         run: |
           ./result/bin/composio --version
           ./result/bin/composio --help
+
+      - name: Test Codex ACP Adapter Execution
+        run: |
+          ./result/bin/codex-acp --help
+
+      - name: Test Claude Code ACP Protocol Handshake
+        run: |
+          RESP=$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | ./result/bin/claude-code-acp)
+          echo "Handshake response: $RESP"
+          echo "$RESP" | grep -q "claude-code-acp"
