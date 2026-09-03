@@ -1,0 +1,25 @@
+name: Feature Request
+description: Suggest an enhancement for the Nix packaging, wrappers, or agent skill
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggest enhancements for `composio-nix` (e.g. wrapper options, environment variables, additional companion binary linking, or skill configurations).
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Proposed Enhancement
+      description: What should be added or changed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Motivation & Use Case
+      description: Why is this helpful for NixOS or agent workflows?
+    validations:
+      required: true

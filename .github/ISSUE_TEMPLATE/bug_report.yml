@@ -1,0 +1,62 @@
+name: Bug Report
+description: Report a broken build, packaging fault, or runtime crash in composio-nix
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please ensure your issue is related to the **Nix packaging or execution** of Composio. For upstream feature bugs or tool logic, consider reporting to [ComposioHQ/composio](https://github.com/ComposioHQ/composio/issues).
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: System Architecture & Platform
+      description: What system are you running this on?
+      options:
+        - "x86_64-linux (Linux AMD64 / Intel)"
+        - "aarch64-linux (Linux ARM64)"
+        - "aarch64-darwin (macOS Apple Silicon M1/M2/M3)"
+        - "x86_64-darwin (macOS Intel)"
+        - "Other / WSL"
+    validations:
+      required: true
+
+  - type: input
+    id: nix-version
+    attributes:
+      label: Nix / OS Version
+      description: Output of `nix --version` and your NixOS/nix-darwin channel.
+      placeholder: "e.g., nix 2.24.1, NixOS 24.11 / unstable"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: consumption-mode
+    attributes:
+      label: How are you consuming composio-nix?
+      options:
+        - "nix run github:mehy3dd1nov/composio-nix"
+        - "Flake input in system or Home Manager configuration"
+        - "nix-env / legacy nix-build"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description & Reproduction
+      description: Describe the issue and provide the exact command run.
+      placeholder: "When running `composio ...`, the process exits with..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Logs / Error Output
+      description: Paste relevant terminal output or stack traces.
+      render: shell
+    validations:
+      required: true
