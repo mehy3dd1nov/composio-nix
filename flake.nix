@@ -31,6 +31,16 @@
           program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.composio-cli}/bin/composio";
           meta.description = "Composio Universal CLI";
         };
+        codex-acp = {
+          type = "app";
+          program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.composio-cli}/bin/codex-acp";
+          meta.description = "OpenAI Codex Agent Client Protocol (ACP) adapter";
+        };
+        claude-code-acp = {
+          type = "app";
+          program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.composio-cli}/bin/claude-code-acp";
+          meta.description = "Claude Code Agent Client Protocol (ACP) adapter";
+        };
         default = composio;
       }
     );
@@ -50,24 +60,69 @@
       options.programs.composio-cli = {
         enable = lib.mkEnableOption "Composio Universal CLI";
         package = lib.mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "composio-cli" {};
-        enableSkill = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to link the composio-cli skill to Antigravity and OpenCode.";
+        agents = {
+          antigravity = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Link composio-cli skill to Google Antigravity (~/.gemini/antigravity-cli/skills/).";
+          };
+          opencode = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Link composio-cli skill to OpenCode (~/.config/opencode/skills/).";
+          };
+          kilocode = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Link composio-cli skill to Kilocode (~/.config/kilocode/skills/).";
+          };
+          claude = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Link composio-cli skill to Claude Code (~/.claude/skills/).";
+          };
+          codex = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Link composio-cli skill and OpenAI agent configuration to Codex (~/.codex/skills/).";
+          };
+          cursor = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Link composio-cli skill rules to Cursor (~/.cursor/rules/).";
+          };
         };
       };
 
       config = lib.mkIf cfg.enable {
         home.packages = [cfg.package];
-        home.file = lib.mkIf cfg.enableSkill {
-          ".gemini/antigravity-cli/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
-          ".config/opencode/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
-        };
+        home.file = lib.mkMerge [
+          (lib.mkIf cfg.agents.antigravity {
+            ".gemini/antigravity-cli/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+          })
+          (lib.mkIf cfg.agents.opencode {
+            ".config/opencode/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+          })
+          (lib.mkIf cfg.agents.kilocode {
+            ".config/kilocode/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+          })
+          (lib.mkIf cfg.agents.claude {
+            ".claude/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+          })
+          (lib.mkIf cfg.agents.codex {
+            ".codex/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".codex/agents/composio.yaml".source = ./skills/composio-cli/agents/openai.yaml;
+          })
+          (lib.mkIf cfg.agents.cursor {
+            ".cursor/rules/composio.mdc".source = self.skills.composio-cli;
+          })
+        ];
       };
     };
 
     skills = {
       composio-cli = ./skills/composio-cli/SKILL.md;
+      openai = ./skills/composio-cli/agents/openai.yaml;
     };
   };
 }

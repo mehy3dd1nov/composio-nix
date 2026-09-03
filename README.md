@@ -75,9 +75,9 @@ Add `composio-nix` to your `flake.nix`:
 }
 ```
 
-### 3. Home Manager Module (Recommended)
+### 3. Multi-Agent Home Manager Module (Recommended)
 
-If you use Home Manager, import the module to enable the CLI and automatically link the companion skill to your agent environments (Antigravity & OpenCode):
+If you use Home Manager, import the module to install the CLI, expose all ACP adapters, and declaratively wire the companion skills directly into your agent environments:
 
 ```nix
 { inputs, ... }: {
@@ -87,10 +87,37 @@ If you use Home Manager, import the module to enable the CLI and automatically l
 
   programs.composio-cli = {
     enable = true;
-    enableSkill = true; # Automatically links skill to ~/.gemini/ and ~/.config/opencode/
+
+    # Declaratively enable/disable specific coding agent environments:
+    agents = {
+      claude = true;      # Claude Code (~/.claude/skills/composio-cli/)
+      codex = true;       # OpenAI Codex (~/.codex/skills/ & ~/.codex/agents/)
+      antigravity = true; # Google Antigravity (~/.gemini/antigravity-cli/skills/)
+      opencode = true;    # OpenCode (~/.config/opencode/skills/)
+      kilocode = true;    # Kilocode (~/.config/kilocode/skills/)
+      cursor = true;      # Cursor Rules (~/.cursor/rules/composio.mdc)
+    };
   };
 }
 ```
+
+### 4. Agent Client Protocol (ACP) & Native Setup
+
+`composio-nix` bundles and exposes high-performance binary adapters for both Anthropic's Claude Code and OpenAI's Codex:
+
+- **Run Claude Code ACP Adapter directly**:
+  ```bash
+  nix run github:mehy3dd1nov/composio-nix#claude-code-acp
+  ```
+- **Run OpenAI Codex ACP Adapter directly**:
+  ```bash
+  nix run github:mehy3dd1nov/composio-nix#codex-acp -- --help
+  ```
+- **Auto-Configure Agent Hosts**:
+  When Claude Code or Codex is present in your PATH, run:
+  ```bash
+  composio setup --target auto --yes
+  ```
 
 ---
 

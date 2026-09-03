@@ -101,13 +101,20 @@ in
         chmod +w $out/libexec/composio/composio
         patchelf --set-interpreter "$GLIBC_LD" $out/libexec/composio/composio
         chmod 755 $out/libexec/composio/composio
+      ''}
 
-        # 2. Patch secondary codex-acp binary with full RPATH if present
-        CODEX_BIN="$out/libexec/composio/acp-adapters/codex/linux-${
-          if stdenv.hostPlatform.isAarch64
-          then "arm64"
-          else "x64"
-        }/codex-acp"
+      # 2. Patch secondary codex-acp binary
+      CODEX_BIN="$out/libexec/composio/acp-adapters/codex/${
+        if stdenv.hostPlatform.isDarwin
+        then "darwin-"
+        else "linux-"
+      }${
+        if stdenv.hostPlatform.isAarch64
+        then "arm64"
+        else "x64"
+      }/codex-acp"
+
+      ${lib.optionalString stdenv.hostPlatform.isLinux ''
         if [ -f "$CODEX_BIN" ]; then
           chmod +w "$CODEX_BIN"
           patchelf --set-interpreter "$GLIBC_LD" "$CODEX_BIN"
@@ -116,9 +123,19 @@ in
         fi
       ''}
 
-      # 3. Create high-performance C binary wrapper
+      if [ -f "$CODEX_BIN" ]; then
+        ln -s "$CODEX_BIN" "$out/bin/codex-acp"
+      fi
+
+      # 3. Create high-performance binary wrappers
       makeBinaryWrapper $out/libexec/composio/composio $out/bin/composio \
         --prefix PATH : ${lib.makeBinPath [nodejs coreutils]}
+
+      if [ -f "$out/libexec/composio/acp-adapters/claude-code-acp.mjs" ]; then
+        makeBinaryWrapper ${nodejs}/bin/node $out/bin/claude-code-acp \
+          --add-flags "$out/libexec/composio/acp-adapters/claude-code-acp.mjs" \
+          --prefix PATH : ${lib.makeBinPath [nodejs coreutils]}
+      fi
 
       runHook postInstall
     '';
