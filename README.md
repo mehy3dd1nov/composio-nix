@@ -39,7 +39,7 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 
 | Channel | Branch | Pinned Release | Recommended Use |
 | :--- | :--- | :--- | :--- |
-| **Stable (Default)** | [`main`](https://github.com/mehy3dd1nov/composio-nix/tree/main) / [`stable`](https://github.com/mehy3dd1nov/composio-nix/tree/stable) | `@composio/cli@0.4.0` | Production MCP servers, stable agent toolkits |
+| **Stable (Default)** | [`main`](https://github.com/mehy3dd1nov/composio-nix/tree/main) | `@composio/cli@0.4.0` | Production MCP servers, stable agent toolkits |
 | **Unstable** | [`unstable`](https://github.com/mehy3dd1nov/composio-nix/tree/unstable) | `@composio/cli@0.4.1-beta.374` | Bleeding-edge beta features, experimental ACP |
 
 ---
