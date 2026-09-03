@@ -66,29 +66,30 @@ Add `composio-nix` to your `flake.nix`:
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
     in {
-      # In your NixOS or Home Manager packages:
+      # Method A: Via raw package
       packages.${system}.default = pkgs.buildEnv {
         name = "my-env";
-        paths = [
-          composio-nix.packages.${system}.default
-        ];
+        paths = [ composio-nix.packages.${system}.default ];
       };
     };
 }
 ```
 
-### 3. Declarative Agent Skill Integration
+### 3. Home Manager Module (Recommended)
 
-If you use Home Manager and AI coding assistants, you can link the bundled skill declaratively:
+If you use Home Manager, import the module to enable the CLI and automatically link the companion skill to your agent environments (Antigravity & OpenCode):
 
 ```nix
-# For Google Antigravity:
-home.file.".gemini/antigravity-cli/skills/composio-cli/SKILL.md".source =
-  composio-nix.skills.composio-cli;
+{ inputs, ... }: {
+  imports = [
+    inputs.composio-nix.homeManagerModules.default
+  ];
 
-# For OpenCode:
-home.file.".config/opencode/skills/composio-cli/SKILL.md".source =
-  composio-nix.skills.composio-cli;
+  programs.composio-cli = {
+    enable = true;
+    enableSkill = true; # Automatically links skill to ~/.gemini/ and ~/.config/opencode/
+  };
+}
 ```
 
 ---
