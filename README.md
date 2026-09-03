@@ -26,12 +26,12 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 
 ## Supported Architectures
 
-| Architecture | Platform | Status |
+| Architecture | Platform | Verification Status |
 | :--- | :--- | :--- |
-| `x86_64-linux` | Linux (Intel/AMD) | Verified (Tier 1) |
-| `aarch64-linux` | Linux (ARM64) | Tested |
-| `x86_64-darwin` | macOS (Intel) | Tested |
-| `aarch64-darwin` | macOS (Apple Silicon) | Tested |
+| `x86_64-linux` | Linux (Intel/AMD) | Verified (Local Workstation) |
+| `aarch64-linux` | Linux (ARM64) | Hermetic Pre-compiled |
+| `aarch64-darwin` | macOS (Apple Silicon) | CI Tested (`macos-latest` M1/M2) |
+| `x86_64-darwin` | macOS (Intel) | Community Best Effort / Untested |
 
 ---
 
