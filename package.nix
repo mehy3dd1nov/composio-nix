@@ -82,10 +82,14 @@ in
       cp -r ${extractedDir}/* $out/libexec/composio/
 
       ${lib.optionalString stdenv.hostPlatform.isLinux ''
-        # Surgical in-place interpreter patch for Bun single-file executable
-        # Uses canonical stdenv dynamic linker to guarantee correct soname on x86_64 (.so.2) and aarch64 (.so.1)
+        # Manual patchelf is intentional: autoPatchelfHook is incompatible with Bun single-file
+        # executables (SFE). Bun appends a custom data trailer after the ELF segment table;
+        # autoPatchelfHook rewrites the ELF layout in ways that corrupt this trailer and produce
+        # a non-functional binary. Manual patchelf with --set-interpreter and --set-rpath is the
+        # correct Strategy B approach for SFE binaries (nix-porter §5.1 architectural constraint).
         chmod +w $out/libexec/composio/composio
         patchelf --set-interpreter "${stdenv.cc.bintools.dynamicLinker}" $out/libexec/composio/composio
+        patchelf --set-rpath "${lib.makeLibraryPath [(lib.getLib openssl) zlib stdenv.cc.cc.lib]}" $out/libexec/composio/composio
         chmod 755 $out/libexec/composio/composio
       ''}
 
