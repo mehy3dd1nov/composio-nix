@@ -3,11 +3,32 @@ set -euo pipefail
 
 REPO="ComposioHQ/composio"
 
-echo "Checking for latest @composio/cli releases from ${REPO}..."
-LATEST_TAG=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep -o '"tag_name": *"@composio/cli@[^"]*"' | head -n 1 | cut -d '"' -f 4)
+# Auto-detect channel from argument or current git branch
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "stable")
+CHANNEL="${1:-}"
+if [ -z "${CHANNEL}" ]; then
+  if [ "${CURRENT_BRANCH}" = "unstable" ] || [ "${CURRENT_BRANCH}" = "beta" ]; then
+    CHANNEL="beta"
+  else
+    CHANNEL="stable"
+  fi
+fi
 
-if [ -z "${LATEST_TAG}" ]; then
-  echo "Error: Could not retrieve release tag for @composio/cli"
+echo "Checking for latest ${CHANNEL} @composio/cli releases from ${REPO} (branch: ${CURRENT_BRANCH})..."
+
+AUTH_HEADER=()
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  AUTH_HEADER=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+fi
+
+if [ "${CHANNEL}" = "stable" ]; then
+  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r '.[].tag_name' | grep -E '^@composio/cli@[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+else
+  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r '.[].tag_name' | grep -E '^@composio/cli@' | head -n 1)
+fi
+
+if [ -z "${LATEST_TAG}" ] || [ "${LATEST_TAG}" = "null" ]; then
+  echo "Error: Could not retrieve release tag for @composio/cli (${CHANNEL})"
   exit 1
 fi
 
@@ -15,10 +36,10 @@ VERSION="${LATEST_TAG#@composio/cli@}"
 CURRENT_VERSION=$(grep -o 'version = "[^"]*"' package.nix | head -n 1 | cut -d '"' -f 2)
 
 echo "Current version in package.nix: ${CURRENT_VERSION}"
-echo "Latest upstream release tag:    ${VERSION}"
+echo "Target upstream release tag:    ${VERSION} (${CHANNEL})"
 
 if [ "${CURRENT_VERSION}" = "${VERSION}" ]; then
-  echo "Repository is already up to date with upstream."
+  echo "Repository is already up to date with upstream ${CHANNEL}."
   exit 0
 fi
 
@@ -27,7 +48,7 @@ BASE_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}"
 
 fetch_hash() {
   local asset="$1"
-  nix store prefetch-file "${BASE_URL}/${asset}" --json | grep -o '"hash": *"[^"]*"' | cut -d '"' -f 4
+  nix store prefetch-file "${BASE_URL}/${asset}" --json | jq -r .hash
 }
 
 echo "Prefetching hashes for ${VERSION}..."
@@ -57,4 +78,4 @@ curl -sL "${BASE_URL}/composio-skill.zip" -o "${TMP_SKILL}/skill.zip"
 unzip -q -o "${TMP_SKILL}/skill.zip" -d skills/ || true
 rm -rf "${TMP_SKILL}"
 
-echo "Done. package.nix and skills updated to ${VERSION}."
+echo "Done. package.nix and skills updated to ${VERSION} (${CHANNEL})."

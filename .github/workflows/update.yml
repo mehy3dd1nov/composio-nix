@@ -13,9 +13,14 @@ permissions:
 jobs:
   check-update:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: [main, unstable]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
 
       - name: Install Nix
         uses: cachix/install-nix-action@v30
@@ -25,6 +30,8 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Update Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x ./scripts/update.sh
           ./scripts/update.sh
@@ -38,12 +45,13 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(release): bump composio-cli to latest upstream"
-          title: "chore(release): bump composio-cli to latest upstream"
+          base: ${{ matrix.branch }}
+          branch: chore/upstream-update-${{ matrix.branch }}
+          commit-message: "chore(release): bump composio-cli on ${{ matrix.branch }}"
+          title: "chore(release): bump composio-cli on ${{ matrix.branch }}"
           body: |
-            Automated daily update for `@composio/cli`.
+            Automated daily update for `@composio/cli` on `${{ matrix.branch }}`.
             - Updated `package.nix` SRI hashes across all platforms
             - Ingested latest `composio-skill.zip`
             - Built and tested execution via Nix
-          branch: "chore/upstream-update"
           delete-branch: true
