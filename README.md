@@ -35,11 +35,27 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 
 ---
 
+## Release Channels & Branches
+
+| Channel | Branch | Pinned Release | Recommended Use |
+| :--- | :--- | :--- | :--- |
+| **Stable (Default)** | [`main`](https://github.com/mehy3dd1nov/composio-nix/tree/main) / [`stable`](https://github.com/mehy3dd1nov/composio-nix/tree/stable) | `@composio/cli@0.4.0` | Production MCP servers, stable agent toolkits |
+| **Unstable** | [`unstable`](https://github.com/mehy3dd1nov/composio-nix/tree/unstable) | `@composio/cli@0.4.1-beta.374` | Bleeding-edge beta features, experimental ACP |
+
+---
+
 ## Quick Start
 
-### 1. Ad-Hoc Execution (Run Directly)
+### 1. Ad-hoc Execution
+
+Run the stable CLI directly with `nix run`:
 ```bash
-nix run github:mehy3dd1nov/composio-nix -- search "github"
+nix run github:mehy3dd1nov/composio-nix -- --version
+```
+
+Or test bleeding-edge beta features from the `unstable` branch:
+```bash
+nix run github:mehy3dd1nov/composio-nix/unstable -- --version
 ```
 
 Or start the interactive ACP server:
