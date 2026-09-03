@@ -13,24 +13,24 @@
   testers,
 }: let
   pname = "composio-cli";
-  version = "0.4.1-beta.373";
+  version = "0.4.1-beta.374";
 
   sources = {
     x86_64-linux = {
       asset = "composio-linux-x64.zip";
-      hash = "sha256-+eG28e6nfT8Pk3kwfMssprOsEzLT2vlS0JAgHfmXBBo=";
+      hash = "sha256-8zLCehIsiraUeKnM1j3s44yHeF1qDgHr0D/X8kAg/tg=";
     };
     aarch64-linux = {
       asset = "composio-linux-aarch64.zip";
-      hash = "sha256-qhhgq/l9gbd4c8GkVTfI2TvB52L4T8oLvAlAf9dP7Rk=";
+      hash = "sha256-EX6fs/FBQ3xzCXBbO2BvscA3meq7RQO7dfWgI/I6bLE=";
     };
     x86_64-darwin = {
       asset = "composio-darwin-x64.zip";
-      hash = "sha256-OG3Mzce7mDQaigKw7PwHxSPAKV/ilOy9Pe328xvsfjU=";
+      hash = "sha256-vyt082EYtPF9uMkWBbhCN2bvvF1mUFRWfMrwByyKvMQ=";
     };
     aarch64-darwin = {
       asset = "composio-darwin-aarch64.zip";
-      hash = "sha256-0gEei/d1KPf1hay7IDoX/zq6eVBtUTz0I+MCVPYCc9o=";
+      hash = "sha256-r9zS9SKJXjJONPLw8TBjs39iTCaEDjTj64pmtbLMmHg=";
     };
   };
 

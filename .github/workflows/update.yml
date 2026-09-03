@@ -1,0 +1,49 @@
+name: Update Upstream
+
+on:
+  schedule:
+    # Run daily at 04:00 UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Update Script
+        run: |
+          chmod +x ./scripts/update.sh
+          ./scripts/update.sh
+
+      - name: Test Build
+        run: |
+          nix build .#composio-cli
+          ./result/bin/composio --version
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(release): bump composio-cli to latest upstream"
+          title: "chore(release): bump composio-cli to latest upstream"
+          body: |
+            Automated daily update for `@composio/cli`.
+            - Updated `package.nix` SRI hashes across all platforms
+            - Ingested latest `composio-skill.zip`
+            - Built and tested execution via Nix
+          branch: "chore/upstream-update"
+          delete-branch: true

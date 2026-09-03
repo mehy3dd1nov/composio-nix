@@ -1,5 +1,8 @@
 # composio-nix
 
+[![CI](https://github.com/mehy3dd1nov/composio-nix/actions/workflows/ci.yml/badge.svg)](https://github.com/mehy3dd1nov/composio-nix/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Production-grade Nix packaging and declarative agent skill distribution for the **Composio Universal CLI** (`@composio/cli`).
 
 > [!WARNING]
@@ -7,38 +10,85 @@ Production-grade Nix packaging and declarative agent skill distribution for the 
 
 ---
 
-## Features
+## Why this exists
 
-- **Native Execution**: Surgical ELF dynamic linker patching for Bun single-file executables without `DT_RUNPATH` corruption.
-- **Full Ecosystem Support**: Colocates runtime ESM services and patches secondary Agent Client Protocol (`codex-acp`) binaries.
-- **Multi-Architecture**: Supports `x86_64-linux`, `aarch64-linux`, `x86_64-darwin`, and `aarch64-darwin`.
-- **Agent Skill Included**: Distributes the official `composio-cli` skill for Google Antigravity, OpenCode, Kilocode, and Claude Code.
+Official distribution of `@composio/cli` bundles single-file binaries compiled with [Bun](https://bun.sh). On NixOS:
+- Running standard installation scripts fails immediately due to the missing standard Linux dynamic linker (`/lib64/ld-linux-x86-64.so.2`).
+- Standard packaging using `autoPatchelfHook` or `patchelf --set-rpath` modifies the ELF dynamic section table, shifting byte offsets and corrupting Bun's embedded trailing ZIP archive. This causes an immediate **`SIGSEGV` (exit code 139)** on startup.
+
+**composio-nix** solves this via:
+1. **Surgical In-Place Linker Patching**: Patches `PT_INTERP` directly to NixOS glibc's dynamic loader without mutating section offsets or setting `DT_RUNPATH`.
+2. **Companion Colocation**: Preserves runtime ESM services (`services/*.mjs`) and bridges them relative to `process.execPath` via high-performance binary wrappers.
+3. **Sub-binary Relinking**: Correctly patches and links bundled secondary binaries (such as the 230MB OpenAI Codex Agent Client Protocol adapter, `codex-acp`).
+4. **Agent Skill Export**: Declaratively exports the official `composio-cli` skill for coding assistants (Google Antigravity, OpenCode, Kilocode, Claude Code).
+
+---
+
+## Supported Architectures
+
+| Architecture | Platform | Status |
+| :--- | :--- | :--- |
+| `x86_64-linux` | Linux (Intel/AMD) | Verified (Tier 1) |
+| `aarch64-linux` | Linux (ARM64) | Tested |
+| `x86_64-darwin` | macOS (Intel) | Tested |
+| `aarch64-darwin` | macOS (Apple Silicon) | Tested |
 
 ---
 
 ## Quick Start
 
-### Run directly via Nix Flake
+### 1. Ad-Hoc Execution (Run Directly)
 ```bash
-nix run github:mhydnv/composio-nix -- search "github"
+nix run github:mehy3dd1nov/composio-nix -- search "github"
 ```
 
-### Add to Flake Inputs
+Or start the interactive ACP server:
+```bash
+nix run github:mehy3dd1nov/composio-nix -- acp
+```
+
+### 2. Flake Integration
+
+Add `composio-nix` to your `flake.nix`:
+
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     composio-nix = {
-      url = "github:mhydnv/composio-nix";
+      url = "github:mehy3dd1nov/composio-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, composio-nix, ... }: {
-    # In your home-manager or NixOS configuration:
-    # home.packages = [ composio-nix.packages.${pkgs.stdenv.hostPlatform.system}.default ];
-  };
+  outputs = { self, nixpkgs, composio-nix, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      # In your NixOS or Home Manager packages:
+      packages.${system}.default = pkgs.buildEnv {
+        name = "my-env";
+        paths = [
+          composio-nix.packages.${system}.default
+        ];
+      };
+    };
 }
+```
+
+### 3. Declarative Agent Skill Integration
+
+If you use Home Manager and AI coding assistants, you can link the bundled skill declaratively:
+
+```nix
+# For Google Antigravity:
+home.file.".gemini/antigravity-cli/skills/composio-cli/SKILL.md".source =
+  composio-nix.skills.composio-cli;
+
+# For OpenCode:
+home.file.".config/opencode/skills/composio-cli/SKILL.md".source =
+  composio-nix.skills.composio-cli;
 ```
 
 ---
@@ -46,3 +96,8 @@ nix run github:mhydnv/composio-nix -- search "github"
 ## Upstream Documentation
 - Composio: https://github.com/ComposioHQ/composio
 - Documentation: https://docs.composio.dev
+
+---
+
+## License
+MIT © [mehy3dd1nov](https://github.com/mehy3dd1nov)
