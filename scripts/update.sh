@@ -54,12 +54,11 @@ fetch_hash() {
 echo "Prefetching hashes for ${VERSION}..."
 HASH_X86_64_LINUX=$(fetch_hash "composio-linux-x64.zip")
 HASH_AARCH64_LINUX=$(fetch_hash "composio-linux-aarch64.zip")
-HASH_X86_64_DARWIN=$(fetch_hash "composio-darwin-x64.zip")
+# x86_64-darwin is excluded: dropped in Nixpkgs 26.11 (nix-porter §3.5)
 HASH_AARCH64_DARWIN=$(fetch_hash "composio-darwin-aarch64.zip")
 
 echo "x86_64-linux:   ${HASH_X86_64_LINUX}"
 echo "aarch64-linux:  ${HASH_AARCH64_LINUX}"
-echo "x86_64-darwin:  ${HASH_X86_64_DARWIN}"
 echo "aarch64-darwin: ${HASH_AARCH64_DARWIN}"
 
 # Update version
@@ -68,7 +67,6 @@ sed -i "s/version = \"${CURRENT_VERSION}\"/version = \"${VERSION}\"/" package.ni
 # Update hashes using ranged sed
 sed -i "/x86_64-linux = {/,/};/ s|hash = \"[^\"]*\";|hash = \"${HASH_X86_64_LINUX}\";|" package.nix
 sed -i "/aarch64-linux = {/,/};/ s|hash = \"[^\"]*\";|hash = \"${HASH_AARCH64_LINUX}\";|" package.nix
-sed -i "/x86_64-darwin = {/,/};/ s|hash = \"[^\"]*\";|hash = \"${HASH_X86_64_DARWIN}\";|" package.nix
 sed -i "/aarch64-darwin = {/,/};/ s|hash = \"[^\"]*\";|hash = \"${HASH_AARCH64_DARWIN}\";|" package.nix
 
 # Also update skill if changed
