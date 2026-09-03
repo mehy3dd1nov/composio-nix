@@ -12,10 +12,9 @@
     systems = [
       "x86_64-linux"
       "aarch64-linux"
-      "x86_64-darwin"
       "aarch64-darwin"
     ];
-    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs {inherit system;}));
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
   in {
     packages = forAllSystems (
       pkgs: rec {
@@ -45,7 +44,15 @@
       }
     );
 
-    overlays.default = final: prev: {
+    checks = forAllSystems (
+      pkgs: {
+        inherit (self.packages.${pkgs.stdenv.hostPlatform.system}.composio-cli.passthru.tests) version;
+      }
+    );
+
+    formatter = forAllSystems (pkgs: pkgs.alejandra);
+
+    overlays.default = final: _: {
       composio-cli = final.callPackage ./package.nix {};
     };
 
@@ -64,27 +71,27 @@
           antigravity = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Link composio-cli skill to Google Antigravity (~/.gemini/antigravity-cli/skills/).";
+            description = "Link composio-cli skill directory to Google Antigravity (~/.gemini/antigravity-cli/skills/).";
           };
           opencode = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Link composio-cli skill to OpenCode (~/.config/opencode/skills/).";
+            description = "Link composio-cli skill directory to OpenCode (~/.config/opencode/skills/).";
           };
           kilocode = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Link composio-cli skill to Kilocode (~/.config/kilocode/skills/).";
+            description = "Link composio-cli skill directory to Kilocode (~/.config/kilocode/skills/).";
           };
           claude = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Link composio-cli skill to Claude Code (~/.claude/skills/).";
+            description = "Link composio-cli skill directory to Claude Code (~/.claude/skills/).";
           };
           codex = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Link composio-cli skill and OpenAI agent configuration to Codex (~/.codex/skills/).";
+            description = "Link composio-cli skill directory and OpenAI agent configuration to Codex (~/.codex/skills/).";
           };
           cursor = lib.mkOption {
             type = lib.types.bool;
@@ -98,30 +105,30 @@
         home.packages = [cfg.package];
         home.file = lib.mkMerge [
           (lib.mkIf cfg.agents.antigravity {
-            ".gemini/antigravity-cli/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".gemini/antigravity-cli/skills/composio-cli".source = self.skills.composio-cli;
           })
           (lib.mkIf cfg.agents.opencode {
-            ".config/opencode/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".config/opencode/skills/composio-cli".source = self.skills.composio-cli;
           })
           (lib.mkIf cfg.agents.kilocode {
-            ".config/kilocode/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".config/kilocode/skills/composio-cli".source = self.skills.composio-cli;
           })
           (lib.mkIf cfg.agents.claude {
-            ".claude/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".claude/skills/composio-cli".source = self.skills.composio-cli;
           })
           (lib.mkIf cfg.agents.codex {
-            ".codex/skills/composio-cli/SKILL.md".source = self.skills.composio-cli;
+            ".codex/skills/composio-cli".source = self.skills.composio-cli;
             ".codex/agents/composio.yaml".source = ./skills/composio-cli/agents/openai.yaml;
           })
           (lib.mkIf cfg.agents.cursor {
-            ".cursor/rules/composio.mdc".source = self.skills.composio-cli;
+            ".cursor/rules/composio.mdc".source = ./skills/composio-cli/SKILL.md;
           })
         ];
       };
     };
 
     skills = {
-      composio-cli = ./skills/composio-cli/SKILL.md;
+      composio-cli = ./skills/composio-cli;
       openai = ./skills/composio-cli/agents/openai.yaml;
     };
   };

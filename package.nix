@@ -5,16 +5,12 @@
   unzip,
   patchelf,
   makeBinaryWrapper,
-  glibc,
   zlib,
   openssl,
   nodejs,
   coreutils,
   testers,
 }: let
-  pname = "composio-cli";
-  version = "0.4.0";
-
   sources = {
     x86_64-linux = {
       asset = "composio-linux-x64.zip";
@@ -24,10 +20,6 @@
       asset = "composio-linux-aarch64.zip";
       hash = "sha256-I+HrgNGUnqitS7ESnbn2kSYv4ViImpiUJFEJ6Y7GPjM=";
     };
-    x86_64-darwin = {
-      asset = "composio-darwin-x64.zip";
-      hash = "sha256-mV7JIF+sZJNv/lWWirmF278O3uFiaMxv6Xqrx07CKyw=";
-    };
     aarch64-darwin = {
       asset = "composio-darwin-aarch64.zip";
       hash = "sha256-EVGvQb15+RaWsmdKSRx4YpaoTeVosddg0dTkB/5WhMg=";
@@ -36,7 +28,7 @@
 
   currentSource =
     sources.${stdenv.hostPlatform.system}
-      or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
+    or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
 
   dirPrefix =
     if stdenv.hostPlatform.isDarwin
@@ -49,7 +41,8 @@
   extractedDir = "${dirPrefix}${archSuffix}";
 in
   stdenv.mkDerivation (finalAttrs: {
-    inherit pname version;
+    pname = "composio-cli";
+    version = "0.4.0";
     __structuredAttrs = true;
     strictDeps = true;
 
@@ -68,15 +61,12 @@ in
       ];
 
     buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
-      glibc
-      openssl
+      (lib.getLib openssl)
       zlib
       stdenv.cc.cc.lib
     ];
 
-    # Invariant: Stripping truncates Bun appended bytecode and causes SIGSEGV
     dontStrip = true;
-    # Invariant: autoPatchelfHook injects DT_RUNPATH into Bun binary causing SIGSEGV
     dontPatchELF = true;
 
     unpackPhase = ''
@@ -92,18 +82,14 @@ in
       cp -r ${extractedDir}/* $out/libexec/composio/
 
       ${lib.optionalString stdenv.hostPlatform.isLinux ''
-        # 1. Surgical in-place interpreter patch for Bun single-file executable
-        GLIBC_LD="${glibc}/lib/ld-linux-${
-          if stdenv.hostPlatform.isAarch64
-          then "aarch64"
-          else "x86-64"
-        }.so.2"
+        # Surgical in-place interpreter patch for Bun single-file executable
+        # Uses canonical stdenv dynamic linker to guarantee correct soname on x86_64 (.so.2) and aarch64 (.so.1)
         chmod +w $out/libexec/composio/composio
-        patchelf --set-interpreter "$GLIBC_LD" $out/libexec/composio/composio
+        patchelf --set-interpreter "${stdenv.cc.bintools.dynamicLinker}" $out/libexec/composio/composio
         chmod 755 $out/libexec/composio/composio
       ''}
 
-      # 2. Patch secondary codex-acp binary
+      # Secondary binary: codex-acp
       CODEX_BIN="$out/libexec/composio/acp-adapters/codex/${
         if stdenv.hostPlatform.isDarwin
         then "darwin-"
@@ -117,19 +103,27 @@ in
       ${lib.optionalString stdenv.hostPlatform.isLinux ''
         if [ -f "$CODEX_BIN" ]; then
           chmod +w "$CODEX_BIN"
-          patchelf --set-interpreter "$GLIBC_LD" "$CODEX_BIN"
-          patchelf --set-rpath "${lib.makeLibraryPath [glibc zlib openssl.out stdenv.cc.cc.lib]}" "$CODEX_BIN"
+          patchelf --set-interpreter "${stdenv.cc.bintools.dynamicLinker}" "$CODEX_BIN"
+          patchelf --set-rpath "${lib.makeLibraryPath [zlib (lib.getLib openssl) stdenv.cc.cc.lib]}" "$CODEX_BIN"
           chmod 755 "$CODEX_BIN"
         fi
       ''}
 
-      if [ -f "$CODEX_BIN" ]; then
-        ln -s "$CODEX_BIN" "$out/bin/codex-acp"
-      fi
+      ${lib.optionalString stdenv.hostPlatform.isDarwin ''
+        if [ -f "$CODEX_BIN" ]; then
+          chmod 755 "$CODEX_BIN"
+        fi
+      ''}
 
-      # 3. Create high-performance binary wrappers
+      # Wrap main binary
       makeBinaryWrapper $out/libexec/composio/composio $out/bin/composio \
         --prefix PATH : ${lib.makeBinPath [nodejs coreutils]}
+
+      # Wrap secondary binaries
+      if [ -f "$CODEX_BIN" ]; then
+        makeBinaryWrapper "$CODEX_BIN" $out/bin/codex-acp \
+          --prefix PATH : ${lib.makeBinPath [coreutils]}
+      fi
 
       if [ -f "$out/libexec/composio/acp-adapters/claude-code-acp.mjs" ]; then
         makeBinaryWrapper ${nodejs}/bin/node $out/bin/claude-code-acp \
@@ -140,8 +134,13 @@ in
       runHook postInstall
     '';
 
-    passthru.tests = {
-      version = testers.testVersion {
+    postFixup = ''
+      patchShebangs $out/libexec/composio
+    '';
+
+    passthru = {
+      inherit sources;
+      tests.version = testers.testVersion {
         package = finalAttrs.finalPackage;
         command = "HOME=$TMPDIR composio --version";
         inherit (finalAttrs) version;
@@ -157,9 +156,13 @@ in
       platforms = [
         "x86_64-linux"
         "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
-      maintainers = with lib.maintainers; [];
+      maintainers = [
+        {
+          name = "mehy3dd1nov";
+          github = "mehy3dd1nov";
+        }
+      ];
     };
   })
