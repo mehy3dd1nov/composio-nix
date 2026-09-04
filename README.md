@@ -32,8 +32,6 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 | `aarch64-linux` | Linux (ARM64) | Hermetic Pre-compiled (Dynamic Linker `.so.1`) |
 | `aarch64-darwin` | macOS (Apple Silicon) | CI Tested (`macos-latest` M1/M2) |
 
-> *Note: Support for `x86_64-darwin` (Intel macOS) was formally deprecated and dropped across Nixpkgs 26.11 (`nix-porter §3.5`) and is excluded from this flake.*
-
 ---
 
 ## Release Channels & Branches
@@ -135,14 +133,6 @@ If you use Home Manager, import the module to install the CLI, expose all ACP ad
   ```bash
   composio setup --target auto --yes
   ```
-
----
-
-## Security & Provenance Model
-
-- **Strategy B Packaging**: This repository packages pre-compiled official upstream release assets published by `ComposioHQ/composio` under MIT license. Hashes are pinned via cryptographic SRI checksums (`sha256-...`).
-- **Gated Update Pipeline**: The automated upstream updater (`.github/workflows/update.yml`) opens pull requests for maintainer review and verification. Releases are never merged automatically without automated CI validation (`nix build`, CLI execution, and ACP handshake tests).
-- **Opt-in Skill Isolation**: Home Manager agent integrations (`programs.composio-cli.agents.*`) are strictly opt-in (`default = false`), ensuring that enabling the package never injects instructions or tools into agent configurations without explicit user consent.
 
 ---
 
