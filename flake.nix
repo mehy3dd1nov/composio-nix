@@ -70,27 +70,27 @@
         agents = {
           antigravity = lib.mkOption {
             type = lib.types.bool;
-            default = true;
+            default = false;
             description = "Link composio-cli skill directory to Google Antigravity (~/.gemini/antigravity-cli/skills/).";
           };
           opencode = lib.mkOption {
             type = lib.types.bool;
-            default = true;
+            default = false;
             description = "Link composio-cli skill directory to OpenCode (~/.config/opencode/skills/).";
           };
           kilocode = lib.mkOption {
             type = lib.types.bool;
-            default = true;
+            default = false;
             description = "Link composio-cli skill directory to Kilocode (~/.config/kilocode/skills/).";
           };
           claude = lib.mkOption {
             type = lib.types.bool;
-            default = true;
+            default = false;
             description = "Link composio-cli skill directory to Claude Code (~/.claude/skills/).";
           };
           codex = lib.mkOption {
             type = lib.types.bool;
-            default = true;
+            default = false;
             description = "Link composio-cli skill directory and OpenAI agent configuration to Codex (~/.codex/skills/).";
           };
           cursor = lib.mkOption {

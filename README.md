@@ -5,8 +5,8 @@
 
 Nix packaging and declarative agent skill distribution for the **Composio Universal CLI** (`@composio/cli`).
 
-> [!WARNING]
-> **Community Disclaimer**: This packaging, flake derivation, and skill integration were vibecoded using AI pair-programming agents with human validation. While tested on NixOS and verified against 26.11 standards, please inspect the derivations and report issues if you encounter unexpected edge cases.
+> [!NOTE]
+> **Architecture & Production Standards**: Packaged under Nixpkgs Strategy B (pre-compiled binary patching) complying with Nixpkgs 26.11 ratchets (`__structuredAttrs`, `strictDeps`, open recursion via `finalAttrs`, `makeBinaryWrapper`). All derivations undergo automated CI testing across Linux and Apple Silicon runners, including live Agent Client Protocol (ACP) stdio handshakes.
 
 ---
 
@@ -14,13 +14,13 @@ Nix packaging and declarative agent skill distribution for the **Composio Univer
 
 Official distribution of `@composio/cli` bundles single-file binaries compiled with [Bun](https://bun.sh). On NixOS:
 - Running standard installation scripts fails immediately due to the missing standard Linux dynamic linker (`/lib64/ld-linux-x86-64.so.2`).
-- Standard packaging using `autoPatchelfHook` or `patchelf --set-rpath` modifies the ELF dynamic section table, shifting byte offsets and corrupting Bun's embedded trailing ZIP archive. This causes an immediate **`SIGSEGV` (exit code 139)** on startup.
+- Standard packaging using generic `autoPatchelfHook` mutates the ELF segment layout, shifting internal offsets and corrupting Bun's embedded trailing ZIP archive. This causes an immediate **`SIGSEGV` (exit code 139)** on startup.
 
 **composio-nix** solves this via:
-1. **Surgical In-Place Linker Patching**: Patches `PT_INTERP` directly to NixOS glibc's dynamic loader without mutating section offsets or setting `DT_RUNPATH`.
-2. **Companion Colocation**: Preserves runtime ESM services (`services/*.mjs`) and bridges them relative to `process.execPath` via high-performance binary wrappers.
-3. **Sub-binary Relinking**: Correctly patches and links bundled secondary binaries (such as the 230MB OpenAI Codex Agent Client Protocol adapter, `codex-acp`).
-4. **Agent Skill Export**: Declaratively exports the official `composio-cli` skill for coding assistants (Google Antigravity, OpenCode, Kilocode, Claude Code).
+1. **Surgical In-Place Linker & RPATH Patching**: Sets `PT_INTERP` to the canonical `stdenv.cc.bintools.dynamicLinker` and injects `DT_RUNPATH` for runtime dependencies (`openssl`, `zlib`, `stdenv.cc.cc.lib`) without corrupting Bun's trailer.
+2. **Companion Colocation**: Preserves runtime ESM services (`services/*.mjs`) and bridges them relative to `process.execPath` via high-performance binary wrappers (`makeBinaryWrapper`).
+3. **Sub-binary Relinking**: Correctly patches dynamic linkers and library search paths for bundled secondary binaries (such as OpenAI's standalone Rust `codex-acp` adapter).
+4. **Agent Skill Export**: Declaratively exports the official `composio-cli` skill with opt-in bindings for coding assistants (Google Antigravity, OpenCode, Kilocode, Claude Code, Codex, Cursor).
 
 ---
 
@@ -28,10 +28,11 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 
 | Architecture | Platform | Verification Status |
 | :--- | :--- | :--- |
-| `x86_64-linux` | Linux (Intel/AMD) | Verified (Local Workstation) |
-| `aarch64-linux` | Linux (ARM64) | Hermetic Pre-compiled |
+| `x86_64-linux` | Linux (Intel/AMD) | Verified (Local Workstation & CI) |
+| `aarch64-linux` | Linux (ARM64) | Hermetic Pre-compiled (Dynamic Linker `.so.1`) |
 | `aarch64-darwin` | macOS (Apple Silicon) | CI Tested (`macos-latest` M1/M2) |
-| `x86_64-darwin` | macOS (Intel) | Community Best Effort / Untested |
+
+> *Note: Support for `x86_64-darwin` (Intel macOS) was formally deprecated and dropped across Nixpkgs 26.11 (`nix-porter §3.5`) and is excluded from this flake.*
 
 ---
 
@@ -134,6 +135,14 @@ If you use Home Manager, import the module to install the CLI, expose all ACP ad
   ```bash
   composio setup --target auto --yes
   ```
+
+---
+
+## Security & Provenance Model
+
+- **Strategy B Packaging**: This repository packages pre-compiled official upstream release assets published by `ComposioHQ/composio` under MIT license. Hashes are pinned via cryptographic SRI checksums (`sha256-...`).
+- **Gated Update Pipeline**: The automated upstream updater (`.github/workflows/update.yml`) opens pull requests for maintainer review and verification. Releases are never merged automatically without automated CI validation (`nix build`, CLI execution, and ACP handshake tests).
+- **Opt-in Skill Isolation**: Home Manager agent integrations (`programs.composio-cli.agents.*`) are strictly opt-in (`default = false`), ensuring that enabling the package never injects instructions or tools into agent configurations without explicit user consent.
 
 ---
 
