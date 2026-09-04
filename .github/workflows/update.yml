@@ -1,9 +1,9 @@
-name: Update Upstream
+name: Check and PR Composio CLI Updates
 
 on:
   schedule:
-    # Run daily at 04:00 UTC
-    - cron: '0 4 * * *'
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -11,13 +11,14 @@ permissions:
   pull-requests: write
 
 jobs:
-  check-update:
+  check-and-pr:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         branch: [main, unstable]
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
@@ -29,14 +30,13 @@ jobs:
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Update Script
+      - name: Run nix-update via passthru.updateScript
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          chmod +x ./scripts/update.sh
-          ./scripts/update.sh
+          nix run nixpkgs#nix-update -- --flake --use-update-script composio-cli
 
-      - name: Test Build & ACP Protocol Verification
+      - name: Test Build & Protocol Handshake
         run: |
           nix flake check
           nix build .#composio-cli
@@ -54,10 +54,11 @@ jobs:
           base: ${{ matrix.branch }}
           branch: chore/upstream-update-${{ matrix.branch }}
           commit-message: "chore(release): bump composio-cli on ${{ matrix.branch }}"
-          title: "chore(release): bump composio-cli on ${{ matrix.branch }}"
+          title: "🚀 composio-cli: bump version on ${{ matrix.branch }}"
           body: |
-            Automated daily update for `@composio/cli` on `${{ matrix.branch }}`.
-            - Updated `package.nix` SRI hashes across all platforms
-            - Ingested latest `composio-skill.zip`
-            - Built and tested execution via Nix
+            An upstream update was detected for **Composio CLI** on `${{ matrix.branch }}`.
+            
+            - Updated `package.nix` SRI hashes across Linux and Apple Silicon
+            - Verified multi-platform flake evaluation
+            - Smoke-tested CLI and Agent Client Protocol (ACP) handshakes
           delete-branch: true
