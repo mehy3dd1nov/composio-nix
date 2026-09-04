@@ -36,10 +36,16 @@ jobs:
           chmod +x ./scripts/update.sh
           ./scripts/update.sh
 
-      - name: Test Build
+      - name: Test Build & ACP Protocol Verification
         run: |
+          nix flake check
           nix build .#composio-cli
           ./result/bin/composio --version
+          ./result/bin/composio --help
+          ./result/bin/codex-acp --help
+          RESP=$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | ./result/bin/claude-code-acp)
+          echo "ACP Handshake: $RESP"
+          echo "$RESP" | grep -q "claude-code-acp"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
