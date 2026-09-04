@@ -6,13 +6,16 @@ on:
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+concurrency:
+  group: update-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   check-and-pr:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +39,21 @@ jobs:
         run: |
           nix run nixpkgs#nix-update -- --flake --use-update-script composio-cli
 
+      - name: Check for Modifications
+        id: git_status
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            NEW_VER=$(grep -o 'version = "[^"]*"' package.nix | head -n 1 | cut -d '"' -f 2)
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=${NEW_VER}" >> $GITHUB_OUTPUT
+            echo "### Upstream Update Detected: \`${NEW_VER}\` on \`${{ matrix.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "### Upstream is up to date on \`${{ matrix.branch }}\` (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Test Build & Protocol Handshake
+        if: steps.git_status.outputs.changed == 'true'
         run: |
           nix flake check
           nix build .#composio-cli
@@ -46,19 +63,21 @@ jobs:
           RESP=$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | ./result/bin/claude-code-acp)
           echo "ACP Handshake: $RESP"
           echo "$RESP" | grep -q "claude-code-acp"
+          echo "- Build and ACP stdio handshakes: PASSED" >> $GITHUB_STEP_SUMMARY
 
       - name: Create Pull Request
+        if: steps.git_status.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: ${{ matrix.branch }}
           branch: chore/upstream-update-${{ matrix.branch }}
-          commit-message: "chore(release): bump composio-cli on ${{ matrix.branch }}"
-          title: "🚀 composio-cli: bump version on ${{ matrix.branch }}"
+          commit-message: "chore(release): bump composio-cli to ${{ steps.git_status.outputs.version }} on ${{ matrix.branch }}"
+          title: "chore(release): bump composio-cli to ${{ steps.git_status.outputs.version }} on ${{ matrix.branch }}"
           body: |
             An upstream update was detected for **Composio CLI** on `${{ matrix.branch }}`.
             
-            - Updated `package.nix` SRI hashes across Linux and Apple Silicon
-            - Verified multi-platform flake evaluation
-            - Smoke-tested CLI and Agent Client Protocol (ACP) handshakes
+            - **Target Version**: `${{ steps.git_status.outputs.version }}`
+            - **Platform Hashes**: Updated for `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`
+            - **Validation**: Hermetic flake checks, binary execution, and ACP handshakes passed cleanly in CI runner.
           delete-branch: true
