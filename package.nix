@@ -14,15 +14,15 @@
   sources = {
     x86_64-linux = {
       asset = "composio-linux-x64.zip";
-      hash = "sha256-8zLCehIsiraUeKnM1j3s44yHeF1qDgHr0D/X8kAg/tg=";
+      hash = "sha256-hspW5IO5MVWaAukOyKYqsTLCDZTlgiwdqxs7+F6r/QE=";
     };
     aarch64-linux = {
       asset = "composio-linux-aarch64.zip";
-      hash = "sha256-EX6fs/FBQ3xzCXBbO2BvscA3meq7RQO7dfWgI/I6bLE=";
+      hash = "sha256-FomeIHhS8wjiOOmFqClQ98g95n+rcv9+GA3IbLMsMuU=";
     };
     aarch64-darwin = {
       asset = "composio-darwin-aarch64.zip";
-      hash = "sha256-r9zS9SKJXjJONPLw8TBjs39iTCaEDjTj64pmtbLMmHg=";
+      hash = "sha256-y1AwEv2gEa+AGiVbAhEXNq6sxu1iku+AtSbDvaufux0=";
     };
   };
 
@@ -42,7 +42,7 @@
 in
   stdenv.mkDerivation (finalAttrs: {
     pname = "composio-cli";
-    version = "0.4.1-beta.374";
+    version = "0.4.1";
     __structuredAttrs = true;
     strictDeps = true;
 
@@ -149,6 +149,7 @@ in
         command = "HOME=$TMPDIR composio --version";
         inherit (finalAttrs) version;
       };
+      updateScript = [ ./scripts/update.sh ];
     };
 
     meta = {
