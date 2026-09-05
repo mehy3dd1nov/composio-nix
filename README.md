@@ -88,6 +88,9 @@ Add `composio-nix` to your `flake.nix`:
         name = "my-env";
         paths = [ composio-nix.packages.${system}.default ];
       };
+
+      # Method B: Via Nixpkgs Overlay (exposes pkgs.composio-cli)
+      # nixpkgs.overlays = [ composio-nix.overlays.default ]; # or composio-nix.overlays.composio-cli
     };
 }
 ```
@@ -99,7 +102,7 @@ If you use Home Manager, import the module to install the CLI, expose all ACP ad
 ```nix
 { inputs, ... }: {
   imports = [
-    inputs.composio-nix.homeManagerModules.default
+    inputs.composio-nix.homeManagerModules.default # or .composio-cli
   ];
 
   programs.composio-cli = {
