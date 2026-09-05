@@ -22,9 +22,9 @@ if [ -n "${GITHUB_TOKEN:-}" ]; then
 fi
 
 if [ "${CHANNEL}" = "stable" ]; then
-  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r '.[].tag_name' | grep -E '^@composio/cli@[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r 'sort_by(.published_at) | reverse | .[].tag_name' | grep -E '^@composio/cli@[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 else
-  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r '.[].tag_name' | grep -E '^@composio/cli@' | head -n 1)
+  LATEST_TAG=$(curl -sL "${AUTH_HEADER[@]}" "https://api.github.com/repos/${REPO}/releases?per_page=100" | jq -r 'sort_by(.published_at) | reverse | .[].tag_name' | grep -E '^@composio/cli@' | head -n 1)
 fi
 
 if [ -z "${LATEST_TAG}" ] || [ "${LATEST_TAG}" = "null" ]; then
