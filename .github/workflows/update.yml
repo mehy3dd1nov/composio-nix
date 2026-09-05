@@ -29,15 +29,17 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
+          nix_path: nixpkgs=flake:nixpkgs
           extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run nix-update via passthru.updateScript
+      - name: Run Update Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          nix run nixpkgs#nix-update -- --flake --use-update-script composio-cli
+          chmod +x ./scripts/update.sh
+          ./scripts/update.sh
 
       - name: Check for Modifications
         id: git_status
