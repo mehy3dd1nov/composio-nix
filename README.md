@@ -1,6 +1,8 @@
 # composio-nix
 
 [![CI](https://github.com/mehy3dd1nov/composio-nix/actions/workflows/ci.yml/badge.svg)](https://github.com/mehy3dd1nov/composio-nix/actions/workflows/ci.yml)
+[![Stable Releases](https://img.shields.io/badge/Releases-Stable-2ea44f?logo=github)](https://github.com/mehy3dd1nov/composio-nix/releases?q=-is%3Aprerelease)
+[![Beta Releases](https://img.shields.io/badge/Releases-Beta%20Track-f0883e?logo=github)](https://github.com/mehy3dd1nov/composio-nix/releases?q=is%3Aprerelease)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Nix packaging and declarative agent skill distribution for the **Composio Universal CLI** (`@composio/cli`).
@@ -36,10 +38,10 @@ Official distribution of `@composio/cli` bundles single-file binaries compiled w
 
 ## Release Channels & Branches
 
-| Channel | Branch | Pinned Release | Recommended Use |
+| Channel | Branch | Releases Feed | Recommended Use |
 | :--- | :--- | :--- | :--- |
-| **Stable (Default)** | [`main`](https://github.com/mehy3dd1nov/composio-nix/tree/main) | [`v0.4.1`](https://github.com/mehy3dd1nov/composio-nix/releases/tag/v0.4.1) (`@composio/cli@0.4.1`) | Production MCP servers, stable agent toolkits |
-| **Unstable** | [`unstable`](https://github.com/mehy3dd1nov/composio-nix/tree/unstable) | [`v0.4.2-beta.379`](https://github.com/mehy3dd1nov/composio-nix/releases/tag/v0.4.2-beta.379) (Pre-release) | Bleeding-edge beta features, experimental ACP |
+| **Stable (Default)** | [`main`](https://github.com/mehy3dd1nov/composio-nix/tree/main) | [Browse Stable Releases (`-is:prerelease`)](https://github.com/mehy3dd1nov/composio-nix/releases?q=-is%3Aprerelease) | Production MCP servers, stable agent toolkits |
+| **Unstable** | [`unstable`](https://github.com/mehy3dd1nov/composio-nix/tree/unstable) | [Browse Beta Releases (`is:prerelease`)](https://github.com/mehy3dd1nov/composio-nix/releases?q=is%3Aprerelease) | Bleeding-edge beta features, experimental ACP |
 
 ---
 
