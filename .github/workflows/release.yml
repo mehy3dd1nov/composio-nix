@@ -1,0 +1,57 @@
+name: Publish Release
+
+on:
+  push:
+    branches: [main, unstable]
+    paths:
+      - 'package.nix'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check and Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          VERSION=$(grep -o 'version = "[^"]*"' package.nix | head -n 1 | cut -d '"' -f 2)
+          TAG="v${VERSION}"
+
+          echo "Inspecting release tag: ${TAG} on branch: ${BRANCH}"
+
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "Release tag ${TAG} already exists. Skipping release creation."
+            exit 0
+          fi
+
+          EXTRA_FLAGS=()
+          if [ "${BRANCH}" = "main" ]; then
+            TITLE="${TAG} (Stable)"
+            EXTRA_FLAGS=(--latest)
+          else
+            TITLE="${TAG} (Unstable)"
+            EXTRA_FLAGS=(--prerelease)
+          fi
+
+          echo "Creating release ${TAG} with title '${TITLE}'..."
+          gh release create "${TAG}" \
+            --target "${BRANCH}" \
+            --title "${TITLE}" \
+            --generate-notes \
+            "${EXTRA_FLAGS[@]}"
+
+          echo "Successfully published ${TAG} on ${BRANCH}."
