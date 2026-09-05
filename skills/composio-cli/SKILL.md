@@ -4,7 +4,7 @@ description: Help users operate the published Composio CLI to find the right too
 ---
 
 <!-- AUTO-GENERATED: edit skills-src/composio-cli/index.ts and rebuild -->
-<!-- release-channel: stable -->
+<!-- release-channel: beta -->
 
 # Composio CLI
 
@@ -15,6 +15,7 @@ description: Help users operate the published Composio CLI to find the right too
 3. If `execute` says the toolkit is not connected, run `composio link <toolkit>` and retry.
 4. If the arguments are unclear, run `composio execute <slug> --get-schema` or `--dry-run` before guessing.
 5. Reach for `composio search "<task>"` only when the slug is unknown. `search` accepts one or more queries, so batch related discovery work into a single command when useful.
+6. If the CLI build enables the experimental `listen` feature, use it for temporary consumer-project trigger subscriptions.
 
 ## `execute` - Run A Tool
 
@@ -89,6 +90,27 @@ Key flags:
 - `--alias`: Assign an alias to the connected account. Required when creating an additional account for the same toolkit.
 
 - Retry the original `execute` command after linking succeeds.
+
+## `listen` - Subscribe To Trigger Events
+
+Use `listen` for temporary trigger subscriptions in consumer projects, especially when background agents should consume new event payloads from artifact files.
+
+```bash
+composio listen GMAIL_NEW_GMAIL_MESSAGE
+composio listen SLACK_RECEIVE_MESSAGE -p '{ trigger_config: { channel: "C123" } }'
+composio listen GMAIL_NEW_GMAIL_MESSAGE --stream
+composio listen GMAIL_NEW_GMAIL_MESSAGE --stream '.data.threadId'
+composio listen GMAIL_NEW_GMAIL_MESSAGE --timeout 5m
+composio listen GMAIL_NEW_GMAIL_MESSAGE -p @trigger.json --max-events 5
+```
+
+Key flags:
+- `-p/--params`: Provide only trigger config fields; connected account resolution is automatic.
+- `--stream`: Print events inline, optionally narrowed to a JSON path.
+- `--timeout` and `--max-events`: Stop long-running listeners cleanly.
+- `--account`: Select which connected account to use by alias, word_id, or account id.
+
+- `composio artifacts cwd` shows the current artifact root when saved payloads need inspection.
 
 ## `proxy` - Raw API Access
 
