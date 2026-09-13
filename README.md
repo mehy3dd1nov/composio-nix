@@ -7,9 +7,6 @@
 
 Nix packaging and declarative agent skill distribution for the **Composio Universal CLI** (`@composio/cli`).
 
-> [!NOTE]
-> **Architecture & Production Standards**: Packaged under Nixpkgs Strategy B (pre-compiled binary patching) complying with Nixpkgs 26.11 ratchets (`__structuredAttrs`, `strictDeps`, open recursion via `finalAttrs`, `makeBinaryWrapper`). All derivations undergo automated CI testing across Linux and Apple Silicon runners, including live Agent Client Protocol (ACP) stdio handshakes.
-
 ---
 
 ## Why this exists
