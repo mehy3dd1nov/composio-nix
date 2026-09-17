@@ -97,7 +97,7 @@ Use `listen` for temporary trigger subscriptions in consumer projects, especiall
 
 ```bash
 composio listen GMAIL_NEW_GMAIL_MESSAGE
-composio listen SLACK_RECEIVE_MESSAGE -p '{ trigger_config: { channel: "C123" } }'
+composio listen SLACK_CHANNEL_MESSAGE_RECEIVED -p '{ trigger_config: { channel_id: "C123" } }'
 composio listen GMAIL_NEW_GMAIL_MESSAGE --stream
 composio listen GMAIL_NEW_GMAIL_MESSAGE --stream '.data.threadId'
 composio listen GMAIL_NEW_GMAIL_MESSAGE --timeout 5m
